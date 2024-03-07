@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.security import OAuth2PasswordBearer
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from models import ArtistCard, ArtistCardCreate
 from database import init
@@ -10,6 +11,19 @@ load_dotenv()
 SECRET_TOKEN = os.getenv("SECRET_TOKEN")
 
 app = FastAPI()
+
+origins = [
+    "http://localhost:5173",
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.on_event("startup")
 async def startup_event():
@@ -38,6 +52,9 @@ async def create_artist_card(artist_card: ArtistCardCreate, _: None = Depends(va
 
 @app.get("/artistcard/random", response_model=ArtistCard)
 async def get_random_artist_card():
+    '''
+        Returns random artist from the ArtistCard Collection.
+    '''
     pipeline = [{"$sample": {"size": 1}}]
     artist_cards = await ArtistCard.aggregate(pipeline).to_list()
     
